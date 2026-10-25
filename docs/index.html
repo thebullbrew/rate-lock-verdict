@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Rate Lock Verdict — Lock Today or Float?</title>
+<meta name="description" content="Expected-value math on locking your mortgage rate today vs floating to closing.">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-32.png"><link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="theme-color" content="#120E08">
+<style>
+:root{--bg:#120E08;--surface:#1D1610;--surface2:#271C12;--text:#F2EAD8;--muted:#C9B99A;--accent:#D99A2B;--accent2:#6B4A2F;--bad:#E07A5F;--good:#9BC49B;--line:#3A2A1A}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;line-height:1.5}
+.wrap{max-width:1060px;margin:0 auto;padding:28px 18px 60px}
+.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.22em;font-size:.72rem;font-weight:bold}
+h1{font-size:clamp(2.2rem,6vw,3.6rem);line-height:1.02;margin:.3em 0 .25em}h2{font-size:1.45rem;margin:0 0 .5em}h3{margin:.2em 0 .4em}
+.lede{color:var(--muted);font-size:1.08rem;max-width:720px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 1px 0 rgba(217,154,43,.14)}
+label{display:block;font-size:.86rem;color:var(--muted);margin:13px 0 5px;text-transform:uppercase;letter-spacing:.08em}
+input,select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#120E08;color:var(--text);font-size:1rem;font-family:inherit}
+input[type=range]{padding:0;accent-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.hero{background:linear-gradient(160deg,var(--surface2),var(--surface));text-align:center;padding:32px 22px}
+.seal{display:inline-block;border:3px double var(--accent);color:var(--accent);border-radius:50%;width:152px;height:152px;line-height:1.15;padding-top:44px;font-weight:bold;letter-spacing:.08em;font-size:1.25rem;transform:rotate(-4deg);background:rgba(217,154,43,.07)}
+.big{font-size:clamp(2rem,5vw,3rem);color:var(--accent);font-weight:bold;line-height:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}.kpi b{display:block;font-size:1.45rem;color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:.94rem}th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{color:var(--accent);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}
+button{background:var(--accent);color:#181008;border:0;border-radius:999px;padding:12px 20px;font-weight:bold;font-family:inherit;cursor:pointer;margin:6px 6px 0 0}
+button.secondary{background:var(--accent2);color:var(--text)}
+.small{font-size:.88rem;color:var(--muted)}.warn{color:var(--bad);font-weight:bold}.good{color:var(--good)}
+.saved{margin-top:10px}.saved div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0}
+footer{color:var(--muted);font-size:.85rem;margin-top:28px}
+</style></head>
+<body><div class="wrap">
+<p class="eyebrow">For buyers under contract · Smoked oak edition</p>
+<h1>The Rate Lock Verdict</h1>
+<p class="lede">Lock today, or float and pray? Lenders sell certainty. Gamblers sell hope. This does the expected-value math on both — over the years you'll actually keep the loan, not a scary 30-year headline.</p>
+
+<div class="grid">
+<section class="card"><h2>Your loan</h2>
+<label>Loan amount ($)</label><input id="loan" type="number" value="450000" step="5000">
+<div class="row"><div><label>Rate you can lock today (%)</label><input id="lockRate" type="number" value="6.75" step="0.125"></div>
+<div><label>Days to closing</label><input id="days" type="number" value="28" step="1"></div></div>
+<div class="row"><div><label>Years you'll likely keep this loan</label><input id="hold" type="number" value="7" step="1"></div>
+<div><label>Term (years)</label><input id="term" type="number" value="30" step="1"></div></div>
+<label>Extra cost per longer lock step (points) — 30→45→60 days</label><input id="stepCost" type="number" value="0.125" step="0.025">
+<label>Extension cost if your lock expires (% of loan per day)</label><input id="extCost" type="number" value="0.02" step="0.005">
+<p class="small">Ask your lender for those last two numbers in writing. If they won't give them, that tells you something too.</p>
+</section>
+
+<section class="card"><h2>If you float, what happens?</h2>
+<p class="small">Three honest cases. Probabilities are auto-normalised if they don't add to 100.</p>
+<div class="row3"><div><label>Best rate %</label><input id="rBest" type="number" value="6.375" step="0.125"></div><div><label>Chance %</label><input id="pBest" type="number" value="25" step="5"></div><div><label>&nbsp;</label><p class="small">Rates fall</p></div></div>
+<div class="row3"><div><label>Likely rate %</label><input id="rLikely" type="number" value="6.75" step="0.125"></div><div><label>Chance %</label><input id="pLikely" type="number" value="50" step="5"></div><div><label>&nbsp;</label><p class="small">Rates sit</p></div></div>
+<div class="row3"><div><label>Worst rate %</label><input id="rWorst" type="number" value="7.25" step="0.125"></div><div><label>Chance %</label><input id="pWorst" type="number" value="25" step="5"></div><div><label>&nbsp;</label><p class="small">Rates jump</p></div></div>
+<label>Lock period you're considering (days)</label>
+<select id="lockDays"><option>15</option><option selected>30</option><option>45</option><option>60</option></select>
+</section>
+</div>
+
+<section class="card hero" style="margin-top:18px"><div id="seal" class="seal">—</div>
+<p id="verdictText" style="font-size:1.12rem;max-width:680px;margin:18px auto 0"></p>
+<div class="kpis">
+<div class="kpi"><span class="small">Payment if you lock</span><b id="kPayLock">—</b><span class="small">per month, P&amp;I</span></div>
+<div class="kpi"><span class="small">Expected float rate</span><b id="kEvRate">—</b><span class="small">probability-weighted</span></div>
+<div class="kpi"><span class="small">Expected float cost vs lock</span><b id="kEvDiff">—</b><span class="small">over your hold period</span></div>
+<div class="kpi"><span class="small">Worst-case cost vs lock</span><b id="kWorst">—</b><span class="small">if the jump case hits</span></div>
+<div class="kpi"><span class="small">Right lock length</span><b id="kLockLen">—</b><span class="small" id="kLockWhy">closing + 7-day buffer</span></div>
+</div></section>
+
+<div class="grid" style="margin-top:18px">
+<section class="card"><h2>The lock-length trap</h2><div id="lockTrap"></div></section>
+<section class="card"><h2>What floating has to do to win</h2><div id="breakeven"></div>
+<button onclick="saveScenario()">Save scenario</button><button class="secondary" onclick="copySummary()">Copy summary</button>
+<div class="saved" id="saved"></div></section>
+</div>
+
+<section class="card" style="margin-top:18px"><h2>Sensitivity — if rates move before closing</h2>
+<div style="overflow-x:auto"><table><thead><tr><th>Rate move</th><th>Rate</th><th>Payment / mo</th><th>Diff / mo vs lock</th><th>Cost diff over hold</th></tr></thead><tbody id="sens"></tbody></table></div>
+<p class="small">Hold-period cost = interest actually paid over your hold years. Nobody keeps a 30-year loan for 30 years, so we don't price your decision like you will.</p></section>
+
+<footer>Not financial advice and not a lender quote — rates, lock pricing and extension fees come from your lender. The math here simply stops a coin-flip from dressing up as a strategy.</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Math.round(Math.abs(n)).toLocaleString();
+const signed=n=>(n<0?'−':'+')+fmt(n);
+function pmt(P,annualPct,years){const r=annualPct/100/12,n=years*12;if(r===0)return P/n;return P*r/(1-Math.pow(1+r,-n));}
+function interestOver(P,annualPct,termYrs,holdYrs){const r=annualPct/100/12,m=pmt(P,annualPct,termYrs);let bal=P,interest=0,months=Math.min(holdYrs*12,termYrs*12);for(let i=0;i<months;i++){const it=bal*r;interest+=it;bal-=m-it;}return interest;}
+function calc(){
+ const P=+$('loan').value||0,lock=+$('lockRate').value||0,hold=Math.max(1,+$('hold').value||7),term=Math.max(1,+$('term').value||30);
+ const days=Math.max(1,+$('days').value||1);
+ let probs=[+$('pBest').value||0,+$('pLikely').value||0,+$('pWorst').value||0];const tot=probs.reduce((a,b)=>a+b,0)||1;probs=probs.map(p=>p/tot);
+ const rates=[+$('rBest').value||lock,+$('rLikely').value||lock,+$('rWorst').value||lock];
+ const evRate=rates.reduce((s,r,i)=>s+r*probs[i],0);
+ const lockInt=interestOver(P,lock,term,hold);
+ const caseInts=rates.map(r=>interestOver(P,r,term,hold));
+ const evInt=caseInts.reduce((s,v,i)=>s+v*probs[i],0);
+ const evDiff=evInt-lockInt, worstDiff=caseInts[2]-lockInt;
+ $('kPayLock').textContent=fmt(pmt(P,lock,term));
+ $('kEvRate').textContent=evRate.toFixed(3)+'%';
+ $('kEvDiff').textContent=signed(evDiff);
+ $('kWorst').textContent=signed(worstDiff);
+ let verdict,txt;
+ if(evDiff>1000){verdict='LOCK IT';txt='Floating loses '+fmt(evDiff)+' in expectation over '+hold+' years, and the worst case costs '+fmt(worstDiff)+' more than locking. Hope is not a hedge. Lock it and sleep.';}
+ else if(evDiff<-1000){verdict='FLOAT';txt='Floating wins '+fmt(-evDiff)+' in expectation over '+hold+' years. Just know the worst case still costs '+fmt(worstDiff)+' more than locking today — only float money you can afford to be wrong with.';}
+ else{verdict='CLOSE CALL';txt='Expected value is a coin toss ('+signed(evDiff)+' over '+hold+' years). When the math ties, buy the certainty: most buyers should lock, unless a rate improvement would change the house they can close on.';}
+ if(worstDiff>8000&&probs[2]>=0.2&&verdict==='FLOAT'){verdict='LOCK IT';txt+=' Risk override: a '+Math.round(probs[2]*100)+'% chance of a '+fmt(worstDiff)+' hit is too big a tail to chase this expected saving.';}
+ $('seal').textContent=verdict;$('verdictText').textContent=txt;
+ // lock length
+ const needed=days+7; const options=[15,30,45,60]; const right=options.find(o=>o>=needed)||60;
+ const chosen=+$('lockDays').value; const steps=Math.max(0,options.indexOf(right)-options.indexOf(15));
+ $('kLockLen').textContent=right+' days';$('kLockWhy').textContent='You need '+needed+' (closing + buffer)';
+ const stepPts=+$('stepCost').value||0, extPct=+$('extCost').value||0;
+ let trap='';
+ if(chosen<needed){const short=needed-chosen;const cost=P*(extPct/100)*short;trap='<p><span class="warn">Too short.</span> A '+chosen+'-day lock leaves you ~'+short+' days exposed. At your extension rate that is about <b>'+fmt(cost)+'</b> if closing slips to the buffer date — and extensions are at the lender\'s mercy, not yours.</p>';}
+ else if(chosen>right){const extraSteps=options.indexOf(chosen)-options.indexOf(right);const cost=P*(stepPts/100)*extraSteps;trap='<p><span class="warn">Paying for air.</span> A '+chosen+'-day lock costs roughly <b>'+fmt(cost)+'</b> more than the '+right+'-day lock you actually need ('+extraSteps+' extra step'+(extraSteps>1?'s':'')+' at '+stepPts+' points). Comfort is fine. Overpaying for it is optional.</p>';}
+ else{trap='<p><span class="good">Right-sized.</span> A '+chosen+'-day lock covers closing plus a 7-day buffer without buying time you will not use.</p>';}
+ trap+='<p class="small">Longer-lock premium vs the shortest option: '+right+' days ≈ '+fmt(P*(stepPts/100)*steps)+' in points value. Lenders bake this into the rate or the price — either way, you pay it.</p>';
+ $('lockTrap').innerHTML=trap;
+ // breakeven: rate needed for float interest to equal lock (binary search)
+ let lo=0,hi=lock+2;for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(interestOver(P,mid,term,hold)<lockInt)lo=mid;else hi=mid;}
+ const needDrop=lock-lo;
+ $('breakeven').innerHTML='<p>Floating only beats locking if the rate you actually get lands below <b>'+lo.toFixed(3)+'%</b> — a drop of at least <b>'+needDrop.toFixed(3)+'%</b> from today\'s lock.</p><p>Your expected float rate is <b>'+evRate.toFixed(3)+'%</b>. '+(evRate<lo?'<span class="good">Your own forecast clears the bar.</span>':'<span class="warn">Your own forecast does not clear the bar.</span>')+'</p><p class="small">One 0.125% move on this loan is about '+fmt(Math.abs(interestOver(P,lock+0.125,term,hold)-lockInt))+' over '+hold+' years. Small rate, real money.</p>';
+ // sensitivity
+ let rows='';for(let mv=-0.5;mv<=0.501;mv+=0.125){const r=lock+mv;const d=interestOver(P,r,term,hold)-lockInt;rows+='<tr><td>'+(mv>0?'+':'')+mv.toFixed(3)+'%</td><td>'+r.toFixed(3)+'%</td><td>'+fmt(pmt(P,r,term))+'</td><td>'+signed(pmt(P,r,term)-pmt(P,lock,term))+'</td><td>'+signed(d)+'</td></tr>';}
+ $('sens').innerHTML=rows;
+ return {verdict,evRate,evDiff,lock,P};
+}
+let last={};
+function refresh(){last=calc();}
+document.querySelectorAll('input,select').forEach(e=>e.addEventListener('input',refresh));
+function saveScenario(){const list=JSON.parse(localStorage.getItem('rlv')||'[]');list.push({d:new Date().toLocaleDateString(),loan:last.P,lock:last.lock,v:last.verdict,ev:last.evRate.toFixed(3)});localStorage.setItem('rlv',JSON.stringify(list.slice(-8)));renderSaved();}
+function renderSaved(){const list=JSON.parse(localStorage.getItem('rlv')||'[]');$('saved').innerHTML=list.map((s,i)=>'<div><span>'+s.d+' · '+fmt(s.loan)+' @ '+s.lock+'% lockable</span><b>'+s.v+'</b></div>').join('');}
+function copySummary(){const t='Rate Lock Verdict: '+last.verdict+' — loan '+fmt(last.P)+', lockable at '+last.lock+'%, expected float rate '+(last.evRate||0).toFixed(3)+'%, expected float cost vs lock '+signed(last.evDiff||0)+' over the hold period.';navigator.clipboard&&navigator.clipboard.writeText(t);alert('Summary copied.');}
+renderSaved();refresh();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+</script></body></html>
